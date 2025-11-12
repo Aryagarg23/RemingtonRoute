@@ -76,9 +76,9 @@ def puzzle_to_ptrnet_sample(puzzle):
 
 def generate_variable_ptrnet_dataset(
     num_samples=10000,
-    grid_size_range=(5, 12),
-    checkpoint_range=(5, 15),
-    wall_prob_range=(0.05, 0.35),
+    grid_size_range=(6, 6),
+    checkpoint_range=(7, 7),
+    wall_prob_range=(0.00, 0.00),
     output_dir="gym/output/datasets/",
     difficulty_distribution=None,
     variable_dimensions=True
@@ -263,17 +263,17 @@ if __name__ == "__main__":
                         help='Wall probability (fixed mode only)')
     
     # Variable mode parameters
-    parser.add_argument('--grid-min', type=int, default=5,
+    parser.add_argument('--grid-min', type=int, default=6,
                         help='Minimum grid size (variable mode)')
-    parser.add_argument('--grid-max', type=int, default=12,
+    parser.add_argument('--grid-max', type=int, default=6,
                         help='Maximum grid size (variable mode)')
-    parser.add_argument('--cp-min', type=int, default=5,
+    parser.add_argument('--cp-min', type=int, default=7,
                         help='Minimum checkpoints')
-    parser.add_argument('--cp-max', type=int, default=15,
+    parser.add_argument('--cp-max', type=int, default=7,
                         help='Maximum checkpoints')
-    parser.add_argument('--wall-min', type=float, default=0.05,
+    parser.add_argument('--wall-min', type=float, default=0.0,
                         help='Minimum wall probability (variable mode)')
-    parser.add_argument('--wall-max', type=float, default=0.35,
+    parser.add_argument('--wall-max', type=float, default=0.0,
                         help='Maximum wall probability (variable mode)')
     parser.add_argument('--variable-dims', action='store_true', default=True,
                         help='Allow different row and column sizes')

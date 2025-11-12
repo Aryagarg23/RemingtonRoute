@@ -29,10 +29,9 @@ class PointerNetwork(nn.Module):
         input_dim: Dimension of input features (8: x, y, waypoint_type, 4 walls, is_visited)
         hidden_dim: Hidden dimension for LSTM layers
         num_layers: Number of LSTM layers
-        dropout: Dropout probability
     """
     
-    def __init__(self, input_dim=8, hidden_dim=256, num_layers=2, dropout=0.2):
+    def __init__(self, input_dim=8, hidden_dim=1024, num_layers=2):
         super(PointerNetwork, self).__init__()
         
         self.input_dim = input_dim
@@ -47,8 +46,7 @@ class PointerNetwork(nn.Module):
             hidden_dim,
             hidden_dim,
             num_layers=num_layers,
-            batch_first=True,
-            dropout=dropout if num_layers > 1 else 0
+            batch_first=True
         )
         
         # Decoder LSTM
@@ -56,17 +54,13 @@ class PointerNetwork(nn.Module):
             hidden_dim,
             hidden_dim,
             num_layers=num_layers,
-            batch_first=True,
-            dropout=dropout if num_layers > 1 else 0
+            batch_first=True
         )
         
         # Attention mechanism parameters
         self.W1 = nn.Linear(hidden_dim, hidden_dim, bias=False)  # For encoder outputs
         self.W2 = nn.Linear(hidden_dim, hidden_dim, bias=False)  # For decoder state
         self.v = nn.Linear(hidden_dim, 1, bias=False)  # Attention score
-        
-        # Dropout
-        self.dropout = nn.Dropout(dropout)
         
     def forward(self, inputs, targets=None, teacher_forcing_ratio=0.5):
         """
@@ -84,15 +78,20 @@ class PointerNetwork(nn.Module):
         batch_size = inputs.size(0)
         seq_len = inputs.size(1)
         
-        # Clone inputs to track visited state (last dimension is is_visited)
-        current_inputs = inputs.clone()
+        # Create a separate tensor for visited states (not connected to computation graph)
+        visited_states = torch.zeros(batch_size, seq_len, 1, device=inputs.device)
         
-        # Embed inputs
-        embedded = self.dropout(torch.tanh(self.input_embedding(current_inputs)))  # (B, L, H)
+        # Combine original features with visited states
+        def get_current_inputs():
+            # Always use original inputs[:, :, :-1] and current visited_states
+            return torch.cat([inputs[:, :, :-1], visited_states], dim=-1)
+        
+        # Initial encoding with all unvisited
+        current_inputs = get_current_inputs()
+        embedded = torch.tanh(self.input_embedding(current_inputs))  # (B, L, H)
         
         # Encode
         encoder_outputs, (hidden, cell) = self.encoder(embedded)  # (B, L, H)
-        encoder_outputs = self.dropout(encoder_outputs)
         
         # Initialize decoder input (use first encoder output or learned embedding)
         decoder_input = encoder_outputs[:, 0:1, :]  # (B, 1, H)
@@ -100,19 +99,18 @@ class PointerNetwork(nn.Module):
         
         pointers = []
         indices = []
-        mask = torch.zeros(batch_size, seq_len, device=inputs.device).bool()
+        selected_indices = []  # Track selected indices instead of using in-place mask
         
         # Decode sequence
         for step in range(seq_len):
             # Re-encode with updated visited states if not first step
             if step > 0:
-                embedded = self.dropout(torch.tanh(self.input_embedding(current_inputs)))
+                current_inputs = get_current_inputs()
+                embedded = torch.tanh(self.input_embedding(current_inputs))
                 encoder_outputs, _ = self.encoder(embedded)
-                encoder_outputs = self.dropout(encoder_outputs)
             
             # Decoder step
             decoder_output, decoder_hidden = self.decoder(decoder_input, decoder_hidden)
-            decoder_output = self.dropout(decoder_output)  # (B, 1, H)
             
             # Attention mechanism (Bahdanau-style)
             # u_i = v^T tanh(W1 * e_i + W2 * d_t)
@@ -123,8 +121,12 @@ class PointerNetwork(nn.Module):
             scores = self.v(torch.tanh(e_transformed + d_transformed))  # (B, L, 1)
             scores = scores.squeeze(-1)  # (B, L)
             
-            # Mask already selected positions
-            scores = scores.masked_fill(mask, float('-inf'))
+            # Mask already selected positions (create new mask each time)
+            if step > 0:
+                mask = torch.zeros(batch_size, seq_len, device=inputs.device, dtype=torch.bool)
+                for idx_tensor in selected_indices:
+                    mask.scatter_(1, idx_tensor.unsqueeze(1), True)
+                scores = scores.masked_fill(mask, float('-inf'))
             
             # Compute attention distribution
             pointer = F.softmax(scores, dim=1)  # (B, L)
@@ -139,13 +141,11 @@ class PointerNetwork(nn.Module):
                 index = pointer.argmax(dim=1)
             
             indices.append(index)
+            selected_indices.append(index)  # Track selected index
             
-            # Update mask
-            mask.scatter_(1, index.unsqueeze(1), True)
-            
-            # Update visited state in input features (last dimension)
+            # Update visited state (detached from computation graph)
             for b in range(batch_size):
-                current_inputs[b, index[b], -1] = 1.0
+                visited_states[b, index[b], 0] = 1.0
             
             # Update decoder input (use selected encoder output)
             decoder_input = torch.gather(

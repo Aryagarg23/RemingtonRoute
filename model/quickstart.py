@@ -43,7 +43,8 @@ def main():
     ║   2. Train a Pointer Network for 50 epochs                      ║
     ║   3. Evaluate the model and generate visualizations             ║
     ║                                                                  ║
-    ║   Estimated time: 3-4 hours on GPU, 8-10 hours on CPU           ║
+    ║   Estimated time: 1.5-2 hours on GPU (RTX 3090 Ti with AMP)    ║
+    ║                   8-10 hours on CPU                             ║
     ║                                                                  ║
     ╚══════════════════════════════════════════════════════════════════╝
     """)

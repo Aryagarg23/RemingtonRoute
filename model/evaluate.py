@@ -11,7 +11,7 @@ import os
 import matplotlib.pyplot as plt
 from pathlib import Path
 
-from model.ptrnet import PointerNetwork, HamiltonianPuzzleDataset
+from ptrnet import PointerNetwork, HamiltonianPuzzleDataset
 
 
 class PtrNetEvaluator:

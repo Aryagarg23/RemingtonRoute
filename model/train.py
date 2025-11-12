@@ -20,7 +20,7 @@ import json
 import matplotlib.pyplot as plt
 from datetime import datetime
 
-from model.ptrnet import (
+from ptrnet import (
     PointerNetwork,
     HamiltonianPuzzleDataset,
     collate_fn,
@@ -51,12 +51,12 @@ class PtrNetTrainer:
         
         self.optimizer = optim.Adam(model.parameters(), lr=learning_rate)
         self.scheduler = optim.lr_scheduler.ReduceLROnPlateau(
-            self.optimizer, mode='min', factor=0.5, patience=5, verbose=True
+            self.optimizer, mode='min', factor=0.5, patience=5
         )
         
         # Mixed precision training scaler
         if self.use_amp:
-            self.scaler = torch.cuda.amp.GradScaler()
+            self.scaler = torch.amp.GradScaler('cuda')
         else:
             self.scaler = None
         
@@ -91,7 +91,7 @@ class PtrNetTrainer:
             
             # Mixed precision training
             if self.use_amp:
-                with torch.cuda.amp.autocast():
+                with torch.amp.autocast('cuda'):
                     pointers, _ = self.model(inputs, targets, teacher_forcing_ratio)
                     loss = pointer_network_loss(pointers, targets, lengths)
                 
@@ -288,14 +288,13 @@ def main():
     
     # Configuration
     config = {
-        'data_path': 'gym/output/datasets/ptrnet_dataset.jsonl',
-        'batch_size': 64,  # Increased for RTX 3090 Ti (24GB VRAM)
+        'data_path': 'gym/output/datasets/ptrnet_dataset_variable.jsonl',  # Variable-size dataset
+        'batch_size': 128,  # Increased for RTX 3090 Ti (24GB VRAM)
         'val_split': 0.1,
         'num_epochs': 50,
         'learning_rate': 1e-3,
         'hidden_dim': 256,
         'num_layers': 2,
-        'dropout': 0.2,
         'device': 'cuda' if torch.cuda.is_available() else 'cpu',
         'use_amp': True,  # Mixed precision training for 2x speedup
         'checkpoint_dir': 'model/checkpoints',
@@ -359,7 +358,6 @@ def main():
         input_dim=8,  # [x, y, waypoint_type, wall_up, wall_down, wall_left, wall_right, is_visited]
         hidden_dim=config['hidden_dim'],
         num_layers=config['num_layers'],
-        dropout=config['dropout']
     )
     
     # Create trainer
