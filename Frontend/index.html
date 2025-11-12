@@ -1,0 +1,110 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Zip — Host your LinkedIn-style Pack</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="site-header">
+    <div class="container">
+      <a class="brand" href="#">
+        <img src="logo.svg" alt="Zip logo" class="logo" />
+        <span class="brand-name">Zip</span>
+      </a>
+      <nav class="nav">
+        <a href="#features">Features</a>
+        <a href="#how">How it Works</a>
+        <a class="btn" id="cta-top" href="#">Host your Zip</a>
+      </nav>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero">
+      <div class="container hero-grid">
+        <div class="hero-copy">
+          <h1>Host a LinkedIn-style ZIP clone — fast, simple, and private</h1>
+          <p>Create a personal or team "Zip" (profile bundle) that packages your resume, posts, portfolio, and links into a single downloadable ZIP for recruiters and collaborators.</p>
+          <div class="hero-ctas">
+            <a class="btn primary" id="cta-hero" href="#">Get started — it's free</a>
+            <a class="btn ghost" href="README.md">How to host</a>
+          </div>
+          <ul class="benefits">
+            <li>One-file profile package</li>
+            <li>Static hosting friendly</li>
+            <li>Privacy-first sharing</li>
+          </ul>
+        </div>
+        <div class="hero-visual">
+          <div class="mockup">
+            <div class="mockup-header">Zip Preview</div>
+            <div class="mockup-body">
+              <p><strong>Jane Doe</strong></p>
+              <p>Product Designer • jane@example.com</p>
+              <div class="mockup-files">
+                <span>resume.pdf</span>
+                <span>portfolio.zip</span>
+                <span>posts.json</span>
+              </div>
+            </div>
+            <div class="mockup-footer">Download ZIP</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="features" class="section">
+      <div class="container">
+        <h2>Features</h2>
+        <div class="features-grid">
+          <div class="feature">
+            <h3>Static-first</h3>
+            <p>Works great on GitHub Pages, Netlify, or any static host.</p>
+          </div>
+          <div class="feature">
+            <h3>Portable</h3>
+            <p>Users download a single ZIP containing structured profile data and assets.</p>
+          </div>
+          <div class="feature">
+            <h3>Private sharing</h3>
+            <p>Host privately or publicly — sharing is under your control.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section id="how" class="section alt">
+      <div class="container">
+        <h2>How it works</h2>
+        <ol class="steps">
+          <li>Create a directory with your profile files.</li>
+          <li>Bundle into a ZIP named <code>yourname.zip</code>.</li>
+          <li>Upload or commit to a static host and share the link.</li>
+        </ol>
+      </div>
+    </section>
+  </main>
+
+  <footer class="site-footer">
+    <div class="container">
+      <p>Built for hosting a LinkedIn-style ZIP clone — simple static hosting examples and docs in <code>Frontend/README.md</code>.</p>
+      <p>© <span id="year"></span> Zip</p>
+    </div>
+  </footer>
+
+  <div id="modal" class="modal hidden">
+    <div class="modal-panel">
+      <button id="modal-close" class="modal-close">×</button>
+      <h3>Ready to host your Zip?</h3>
+      <p>Serve this folder with any static host. Try:</p>
+      <pre>python3 -m http.server 8000</pre>
+      <p>Open <code>http://localhost:8000</code> and follow the README for packaging instructions.</p>
+      <a id="modal-cta" class="btn primary" href="#">Open README</a>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

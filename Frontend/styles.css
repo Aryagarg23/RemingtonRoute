@@ -1,0 +1,53 @@
+/* Simple, responsive landing page styles */
+:root{
+  --bg:#f6f8fb;
+  --card:#ffffff;
+  --muted:#6b7280;
+  --brand:#0a66c2; /* LinkedIn-like blue */
+  --radius:12px;
+  --container:1100px;
+}
+*{box-sizing:border-box}
+body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;line-height:1.45;color:#111;background:var(--bg);margin:0}
+.container{max-width:var(--container);margin:0 auto;padding:28px}
+.site-header{background:linear-gradient(180deg,rgba(255,255,255,0.6),transparent);backdrop-filter:saturate(120%) blur(4px);position:sticky;top:0;z-index:10}
+.site-header .container{display:flex;align-items:center;justify-content:space-between}
+.brand{display:flex;align-items:center;gap:10px;text-decoration:none;color:inherit}
+.logo{height:36px;width:36px}
+.brand-name{font-weight:700}
+.nav{display:flex;gap:16px;align-items:center}
+.nav a{color:var(--muted);text-decoration:none}
+.btn{display:inline-block;padding:10px 16px;border-radius:8px;text-decoration:none;border:1px solid transparent}
+.btn.ghost{background:transparent;border-color:transparent}
+.btn.primary{background:var(--brand);color:#fff}
+.btn:not(.primary){background:#fff;color:var(--brand);border-color:rgba(10,102,194,0.12)}
+.hero{padding:56px 0}
+.hero-grid{display:grid;grid-template-columns:1fr 420px;gap:40px;align-items:center}
+.hero-copy h1{font-size:2rem;margin:0 0 12px}
+.hero-copy p{color:var(--muted);margin:0 0 18px}
+.hero-ctas{margin:18px 0;display:flex;gap:12px}
+.benefits{display:flex;gap:12px;padding:0;margin:16px 0 0;list-style:none}
+.benefits li{background:var(--card);padding:8px 12px;border-radius:999px;border:1px solid rgba(0,0,0,0.04)}
+.mockup{background:linear-gradient(180deg,#fff,#f8fbff);border-radius:14px;box-shadow:0 10px 30px rgba(10,66,120,0.06);overflow:hidden;border:1px solid rgba(10,102,194,0.06)}
+.mockup-header{background:linear-gradient(90deg,rgba(10,102,194,0.08),transparent);padding:12px 16px;font-weight:600}
+.mockup-body{padding:18px}
+.mockup-files{display:flex;gap:8px;margin-top:10px}
+.mockup-files span{background:#eef6ff;padding:6px 8px;border-radius:8px;color:var(--brand);font-size:13px}
+.mockup-footer{padding:12px 16px;border-top:1px solid rgba(0,0,0,0.04);text-align:right;font-weight:600;color:var(--brand)}
+.section{padding:44px 0}
+.section.alt{background:linear-gradient(180deg,#fff, #fbfdff)}
+.features-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+.feature{background:var(--card);padding:18px;border-radius:12px;border:1px solid rgba(0,0,0,0.04)}
+.steps{max-width:640px;color:var(--muted)}
+.site-footer{padding:28px 0;color:var(--muted);font-size:14px}
+.code{font-family:monospace}
+/* Modal */
+.modal{position:fixed;inset:0;display:grid;place-items:center;background:rgba(11,22,33,0.45)}
+.modal.hidden{display:none}
+.modal-panel{background:var(--card);padding:22px;border-radius:12px;max-width:520px;width:90%;box-shadow:0 20px 60px rgba(2,6,23,0.3)}
+.modal-close{position:absolute;right:18px;top:16px;border:0;background:transparent;font-size:20px}
+@media (max-width:880px){
+  .hero-grid{grid-template-columns:1fr;}
+  .features-grid{grid-template-columns:1fr}
+  .nav{display:none}
+}
