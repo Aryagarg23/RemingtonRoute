@@ -14,7 +14,7 @@ import random
 import time
 import matplotlib.pyplot as plt
 from typing import Dict, Any, Optional
-from .hamiltonian_puzzle_env import HamiltonianPuzzleEnv
+from ..hamiltonian_puzzle_env import HamiltonianPuzzleEnv
 
 
 class PuzzleVisualizer:
@@ -26,7 +26,7 @@ class PuzzleVisualizer:
 
     @staticmethod
     def draw_puzzle(puzzle: Dict[str, Any], show_solution: bool = False,
-                    ax: Optional[plt.Axes] = None, title: str = "") -> plt.Axes:
+                    ax: Optional[plt.Axes] = None, title: str = "", add_legend: bool = True) -> plt.Axes:
         """
         Draws a single puzzle on a given matplotlib axis.
 
@@ -88,6 +88,17 @@ class PuzzleVisualizer:
             ax.plot(cp[1], cp[0], 'yP', markersize=12)
             ax.text(cp[1], cp[0], str(i + 1), ha='center', va='center', color='black', weight='bold')
 
+        # Add legend
+        if add_legend:
+            legend_elements = [
+                plt.Line2D([0], [0], color='red', linewidth=4, label='Walls'),
+                plt.Line2D([0], [0], color='blue', linewidth=2, alpha=0.6, label='Solution Path'),
+                plt.scatter([0], [0], c='green', marker='o', s=100, label='Start'),
+                plt.scatter([0], [0], c='red', marker='s', s=100, label='Goal'),
+                plt.scatter([0], [0], c='yellow', marker='P', s=100, label='Checkpoint')
+            ]
+            ax.legend(handles=legend_elements, loc='upper right', bbox_to_anchor=(1.15, 1))
+
         return ax
 
     @staticmethod
@@ -114,6 +125,21 @@ class PuzzleVisualizer:
             puzzle, show_solution=True, ax=axes[1],
             title=f"Complete Solution ({num_checkpoints} CPs)"
         )
+
+        # Remove individual legends and add a single figure legend
+        for ax in axes:
+            if ax.get_legend():
+                ax.get_legend().remove()
+
+        # Add figure legend
+        legend_elements = [
+            plt.Line2D([0], [0], color='red', linewidth=4, label='Walls'),
+            plt.Line2D([0], [0], color='blue', linewidth=2, alpha=0.6, label='Solution Path'),
+            plt.scatter([0], [0], c='green', marker='o', s=100, label='Start'),
+            plt.scatter([0], [0], c='red', marker='s', s=100, label='Goal'),
+            plt.scatter([0], [0], c='yellow', marker='P', s=100, label='Checkpoint')
+        ]
+        fig.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, 0.95), ncol=5)
 
         plt.tight_layout()
         if save_path:

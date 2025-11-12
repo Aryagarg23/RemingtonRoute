@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 # Import your environment and utilities
-from hamiltonenv import generate_puzzle, _get_neighbors
+from ..hamiltonian_puzzle_env import PuzzleDataGenerator, HamiltonianPathGenerator
 
 
 # ==============================
@@ -49,7 +49,7 @@ def puzzle_to_ptrnet_sample(puzzle):
         # Barrier encoding
         is_blocked = any(
             frozenset([(r, c), n]) in walls
-            for n in _get_neighbors(r, c, rows, cols)
+            for n in HamiltonianPathGenerator._get_neighbors(r, c, rows, cols)
         )
 
         inputs.append([x_norm, y_norm, w_label, int(is_blocked)])
@@ -69,7 +69,7 @@ def generate_ptrnet_dataset(
     cols=7,
     checkpoint_range=(3, 6),
     wall_probability=0.15,
-    output_dir="ptrnet_dataset/",
+    output_dir="../output/datasets/",
     save_format="jsonl"
 ):
     """
@@ -85,7 +85,7 @@ def generate_ptrnet_dataset(
     with open(json_path, "w") as f_samples, open(puzzle_path, "w") as f_puzzles:
         for _ in tqdm(range(num_samples), desc="Creating puzzles"):
             num_checkpoints = random.randint(*checkpoint_range)
-            puzzle = generate_puzzle(rows, cols, num_checkpoints, wall_probability)
+            puzzle = PuzzleDataGenerator.generate_puzzle(rows, cols, num_checkpoints, wall_probability)
             sample = puzzle_to_ptrnet_sample(puzzle)
 
             f_samples.write(json.dumps(sample) + "\n")
@@ -106,7 +106,7 @@ if __name__ == "__main__":
         cols=7,
         checkpoint_range=(3, 8),
         wall_probability=0.15,
-        output_dir="ptrnet_dataset/",
+        output_dir="gym/output/datasets/",
         save_format="jsonl"  # or "npz"
     )
     end_time = time.time()
