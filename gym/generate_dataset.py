@@ -1,105 +1,113 @@
-import random
 import os
-import matplotlib.pyplot as plt
-from hamiltonenv import HamiltonianPuzzleEnv
+import json
+import random
+from tqdm import tqdm
+import numpy as np
+import time
+
+# Import your environment and utilities
+from hamiltonenv import generate_puzzle, _get_neighbors
+
 
 # ==============================
-# Dataset parameters
+# 1. Convert Puzzle → Ptr-Net Sample
 # ==============================
-num_samples = 5
-rows, cols = 7, 7
-checkpoint_range = (13, 13)
-wall_probability = 0.2
-output_dir = "dataset_samples_side_by_side/"
-os.makedirs(output_dir, exist_ok=True)
-
-# ==============================
-# Helper function to draw puzzle
-# ==============================
-def draw_puzzle(puzzle, show_solution=False, ax=None, title=""):
+def puzzle_to_ptrnet_sample(puzzle):
     """
-    Draws the puzzle on the given matplotlib axis.
-    - show_solution=True → draw full solution path
-    - show_solution=False → only walls and checkpoints
+    Converts a Hamiltonian puzzle dict into a Pointer Network sample.
+    Each grid cell is encoded as:
+        [x_norm, y_norm, waypoint_label, barrier_flag]
+    where:
+        waypoint_label: 0=none, 1=start, 2=checkpoint, 3=goal
+        barrier_flag:   1 if blocked on any side
     """
-    path = puzzle['solution_path']
-    checkpoints = puzzle['checkpoints']
-    walls = puzzle['walls']
     rows, cols = puzzle['rows'], puzzle['cols']
+    path = puzzle['solution_path']
+    walls = puzzle['walls']
+    checkpoints = puzzle['checkpoints']
 
-    if ax is None:
-        fig, ax = plt.subplots(figsize=(cols, rows))
+    # Flatten grid (row-major order)
+    grid_cells = [(r, c) for r in range(rows) for c in range(cols)]
+    cell_to_idx = {cell: idx for idx, cell in enumerate(grid_cells)}
 
-    # Grid
-    ax.set_xticks(range(cols))
-    ax.set_yticks(range(rows))
-    ax.set_xticks([x-0.5 for x in range(1, cols)], minor=True)
-    ax.set_yticks([y-0.5 for y in range(1, rows)], minor=True)
-    ax.grid(which='minor', color='gray', linestyle=':', linewidth=0.5)
-    ax.invert_yaxis()
-    ax.set_aspect('equal')
-    ax.set_title(title)
+    # Build input features
+    inputs = []
+    for (r, c) in grid_cells:
+        x_norm = r / (rows - 1)
+        y_norm = c / (cols - 1)
 
-    # Draw walls
-    for wall in walls:
-        a, b = list(wall)
-        r1, c1 = a
-        r2, c2 = b
-        if r1 == r2:  # vertical wall
-            ax.plot([min(c1,c2)+0.5]*2, [r1-0.5, r1+0.5], 'r-', linewidth=4, solid_capstyle='butt')
-        elif c1 == c2:  # horizontal wall
-            ax.plot([c1-0.5, c1+0.5], [min(r1,r2)+0.5]*2, 'r-', linewidth=4, solid_capstyle='butt')
+        # Waypoint encoding
+        if (r, c) == checkpoints['start']:
+            w_label = 1
+        elif (r, c) == checkpoints['goal']:
+            w_label = 3
+        elif (r, c) in checkpoints['checkpoints']:
+            w_label = 2
+        else:
+            w_label = 0
 
-    # Draw solution path if requested
-    if show_solution and len(path) > 1:
-        r_coords, c_coords = zip(*path)
-        ax.plot(c_coords, r_coords, 'b-', alpha=0.6, linewidth=2, label='Solution Path')
+        # Barrier encoding
+        is_blocked = any(
+            frozenset([(r, c), n]) in walls
+            for n in _get_neighbors(r, c, rows, cols)
+        )
 
-    # Draw start, goal
-    ax.plot(checkpoints['start'][1], checkpoints['start'][0], 'go', markersize=12)
-    ax.text(checkpoints['start'][1], checkpoints['start'][0], 'S', ha='center', va='center', color='white', weight='bold')
+        inputs.append([x_norm, y_norm, w_label, int(is_blocked)])
 
-    ax.plot(checkpoints['goal'][1], checkpoints['goal'][0], 'rs', markersize=12)
-    ax.text(checkpoints['goal'][1], checkpoints['goal'][0], 'G', ha='center', va='center', color='white', weight='bold')
+    # Build output: sequence of indices along solution path
+    outputs = [cell_to_idx[cell] for cell in path]
 
-    # Draw numbered checkpoints
-    for i, cp in enumerate(checkpoints['checkpoints']):
-        ax.plot(cp[1], cp[0], 'yP', markersize=12)
-        ax.text(cp[1], cp[0], str(i+1), ha='center', va='center', color='black', weight='bold')
+    return {"input": inputs, "output": outputs}
 
-    return ax
 
 # ==============================
-# Generate dataset
+# 2. Dataset Generation Function
 # ==============================
-for i in range(num_samples):
-    num_checkpoints = random.randint(*checkpoint_range)
+def generate_ptrnet_dataset(
+    num_samples=1000,
+    rows=7,
+    cols=7,
+    checkpoint_range=(3, 6),
+    wall_probability=0.15,
+    output_dir="ptrnet_dataset/",
+    save_format="jsonl"
+):
+    """
+    Generates multiple puzzles and saves them in a format suitable
+    for training a Pointer Network.
+    Also saves the full puzzle data for visualization.
+    """
+    os.makedirs(output_dir, exist_ok=True)
+    json_path = os.path.join(output_dir, "ptrnet_dataset.jsonl")
+    puzzle_path = os.path.join(output_dir, "ptrnet_puzzles.jsonl")
 
-    # Create environment
-    env = HamiltonianPuzzleEnv(
-        rows=rows, cols=cols,
-        num_checkpoints=num_checkpoints,
-        wall_probability=wall_probability,
-        render_mode=None
+    print(f"Generating {num_samples} puzzles ({rows}x{cols})...")
+    with open(json_path, "w") as f_samples, open(puzzle_path, "w") as f_puzzles:
+        for _ in tqdm(range(num_samples), desc="Creating puzzles"):
+            num_checkpoints = random.randint(*checkpoint_range)
+            puzzle = generate_puzzle(rows, cols, num_checkpoints, wall_probability)
+            sample = puzzle_to_ptrnet_sample(puzzle)
+
+            f_samples.write(json.dumps(sample) + "\n")
+            f_puzzles.write(json.dumps(puzzle, default=list) + "\n")  # store real puzzle
+
+    print(f"\nDataset saved to: {json_path}")
+    print(f"Puzzles saved to: {puzzle_path}")
+
+
+# ==============================
+# 3. Example Usage
+# ==============================
+if __name__ == "__main__":
+    start_time = time.time()
+    generate_ptrnet_dataset(
+        num_samples=1000,
+        rows=7,
+        cols=7,
+        checkpoint_range=(3, 8),
+        wall_probability=0.15,
+        output_dir="ptrnet_dataset/",
+        save_format="jsonl"  # or "npz"
     )
-
-    # Reset env to generate puzzle
-    env.reset()
-    puzzle = env.puzzle_data
-
-    # Side-by-side figure
-    fig, axes = plt.subplots(1, 2, figsize=(14, 7))
-
-    # Left: incomplete puzzle (walls + checkpoints)
-    draw_puzzle(puzzle, show_solution=False, ax=axes[0], title=f"Incomplete ({num_checkpoints} CPs)")
-
-    # Right: complete puzzle (walls + solution path)
-    draw_puzzle(puzzle, show_solution=True, ax=axes[1], title=f"Complete Solution ({num_checkpoints} CPs)")
-
-    plt.tight_layout()
-    plt.savefig(os.path.join(output_dir, f"sample_{i}_side_by_side.png"))
-    plt.close()
-
-    env.close()
-
-print(f"Dataset generated! Images saved in: {output_dir}")
+    end_time = time.time()
+    print(f"Total generation time: {end_time - start_time:.2f} seconds")

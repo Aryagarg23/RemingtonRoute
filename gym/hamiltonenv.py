@@ -119,7 +119,7 @@ class HamiltonianPuzzleEnv(gym.Env):
         self.rows = kwargs.get('rows', 7)
         self.cols = kwargs.get('cols', 7)
         self.num_checkpoints = kwargs.get('num_checkpoints', 3)
-        self.wall_probability = kwargs.get('wall_probability', 0.3)
+        self.wall_probability = kwargs.get('wall_probability', 0.1)
         self.max_steps = kwargs.get('max_steps', self.rows * self.cols * 2)
         self.render_mode = render_mode
 
@@ -301,7 +301,7 @@ def save_puzzle_as_image(puzzle: dict, filename: str):
 
 if __name__ == "__main__":
     env = HamiltonianPuzzleEnv(
-        rows=5, cols=5, num_checkpoints=2, wall_probability=0.2,
+        rows=5, cols=5, num_checkpoints=2, wall_probability=0.1,
         render_mode="human", max_steps=100
     )
 
