@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Zip — Host your LinkedIn-style Pack</title>
+  <title>Zip — LinkedIn Daily Puzzle (play demo)</title>
   <link rel="stylesheet" href="styles.css">
 </head>
 <body>
@@ -25,16 +25,16 @@
     <section class="hero">
       <div class="container hero-grid">
         <div class="hero-copy">
-          <h1>Host a LinkedIn-style ZIP clone — fast, simple, and private</h1>
-          <p>Create a personal or team "Zip" (profile bundle) that packages your resume, posts, portfolio, and links into a single downloadable ZIP for recruiters and collaborators.</p>
+          <h1>Play Zip — LinkedIn's daily visual logic puzzle</h1>
+          <p>Zip is a path-building puzzle: draw a continuous path that visits numbered cells in ascending order and fills the grid without crossing itself. Try the demo below to play a sample level in your browser.</p>
           <div class="hero-ctas">
-            <a class="btn primary" id="cta-hero" href="#">Get started — it's free</a>
-            <a class="btn ghost" href="README.md">How to host</a>
+            <a class="btn primary" id="cta-hero" href="#play">Play the demo</a>
+            <a class="btn ghost" href="README.md">How it works</a>
           </div>
           <ul class="benefits">
-            <li>One-file profile package</li>
-            <li>Static hosting friendly</li>
-            <li>Privacy-first sharing</li>
+            <li>Short daily puzzles</li>
+            <li>Mouse & touch support</li>
+            <li>Small, extendable demo</li>
           </ul>
         </div>
         <div class="hero-visual">
@@ -79,10 +79,23 @@
       <div class="container">
         <h2>How it works</h2>
         <ol class="steps">
-          <li>Create a directory with your profile files.</li>
-          <li>Bundle into a ZIP named <code>yourname.zip</code>.</li>
-          <li>Upload or commit to a static host and share the link.</li>
+          <li>Start on any cell and draw a continuous orthogonal path (up/down/left/right).</li>
+          <li>The path must pass numbered cells in increasing order (1 → 2 → 3 ...).</li>
+          <li>For full Zip rules, the path typically fills the whole grid without crossing itself; this demo validates adjacency, order, and full coverage.</li>
         </ol>
+      </div>
+    </section>
+
+    <section id="play" class="section">
+      <div class="container">
+        <h2>Play demo</h2>
+        <p>Click or drag across the grid to draw a path. Use Reset to try again.</p>
+        <div class="zip-controls">
+          <button id="zip-reset" class="btn">Reset</button>
+          <button id="zip-check" class="btn primary">Check solution</button>
+          <span id="zip-msg" style="margin-left:12px;color:var(--muted)"></span>
+        </div>
+        <div id="zip-game" class="zip-game" aria-label="Zip puzzle"></div>
       </div>
     </section>
   </main>
@@ -106,5 +119,6 @@
   </div>
 
   <script src="script.js"></script>
+  <script src="zip-game.js"></script>
 </body>
 </html>

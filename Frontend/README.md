@@ -1,11 +1,12 @@
-Frontend landing page for hosting a LinkedIn-style "Zip" clone
+Frontend landing page converted to a small Zip puzzle demo
 
-This folder contains a minimal static landing page demonstrating how to host and share a "Zip" — a single ZIP file containing a user's resume, portfolio, and posts.
+This folder now contains a minimal static landing page demonstrating a small playable demo of "Zip" — the LinkedIn daily path-building puzzle. The demo is intentionally small and extendable.
 
 Files
-- index.html — landing page
-- styles.css — styles
-- script.js — tiny interactivity
+- index.html — landing page and demo UI
+- styles.css — styles and game styles
+- script.js — tiny interactivity (modal, year)
+- zip-game.js — the playable Zip demo (one sample level)
 - logo.svg — simple logo
 
 Quick start (serve locally)
@@ -14,12 +15,23 @@ Quick start (serve locally)
 
    python3 -m http.server 8000
 
-2. Open http://localhost:8000 in your browser.
+2. Open http://localhost:8000 in your browser and click "Play the demo" or the Play section.
 
-How to use
-- Package a directory with your profile files into a ZIP named `yourname.zip` and place it in the static host or a public folder.
-- Link to the ZIP file from your own page or use this site as a marketing/hosting landing page.
+How to play the demo
+- Click or drag across the grid to visit adjacent cells.
+- The path cannot revisit cells and must follow orthogonal adjacency.
+- Numbered cells must be visited in ascending order when encountered.
+- Click "Check solution" to validate the path; the demo checks full coverage and number order.
 
-Notes
-- This site is intentionally static and host-friendly (GitHub Pages, Netlify, S3, etc.).
-- If you'd like, I can add example generator scripts to build a ZIP from a profile directory, or add CI config for automatic hosting (GitHub Pages).
+Notes & next steps
+- The demo implements a tiny, client-side level (6x6 grid with a few numbered cells). It's a simple, educational implementation — not a complete faithful clone of LinkedIn's internal game logic.
+- Next enhancements you might want: multiple levels, a solver, daily puzzles, better visuals/animations, mobile-friendly controls, and persistent progress.
+
+Sources & references
+- LinkedIn Games (Zip) and community writeups (search terms: "LinkedIn Zip game", "Zip puzzle")
+
+If you'd like, I can now:
+- Add more levels and a level selector.
+- Implement a solver/backtracking helper to generate solvable levels.
+- Add touch-friendly improvements and animations.
+Tell me which and I'll implement the next step.

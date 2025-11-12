@@ -51,3 +51,17 @@ body{font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial;line-height:1.4
   .features-grid{grid-template-columns:1fr}
   .nav{display:none}
 }
+
+/* Zip game styles */
+.zip-controls{display:flex;align-items:center;gap:12px;margin:12px 0}
+.zip-game{width:100%;max-width:640px;background:linear-gradient(180deg,#fff,#fbfdff);padding:16px;border-radius:12px;border:1px solid rgba(0,0,0,0.04)}
+.zip-grid{display:grid;gap:4px;touch-action:none}
+.zip-cell{background:#f8fafc;border-radius:8px;display:grid;place-items:center;height:56px;font-weight:600;color:#0b1220;user-select:none}
+.zip-cell.number{color:var(--brand)}
+.zip-cell.visited{background:linear-gradient(90deg,#dbeefe,#d7f0ff);color:var(--brand)}
+.zip-cell.sequence::after{content:attr(data-seq);position:absolute;right:6px;bottom:4px;font-size:12px;color:rgba(0,0,0,0.45)}
+.zip-cell-wrapper{position:relative}
+
+@media (max-width:640px){
+  .zip-cell{height:48px;font-size:14px}
+}
