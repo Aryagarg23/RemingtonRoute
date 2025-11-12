@@ -1,6 +1,8 @@
 #!/usr/bin/env python3
 """
-Main Visualizer - Shows PTR Network, Incomplete, and Solution views in one plot.
+Main Visualizer - Shows Human vs PTR Network perspectives in a 2x2 grid.
+Top row: Human perspective (complete/incomplete)
+Bottom row: PTR Network (ML) perspective (with/without solution)
 """
 
 import json
@@ -38,10 +40,9 @@ class MainVisualizer:
 
     def visualize_sample(self, sample_idx: int, save_path: Optional[str] = None) -> None:
         """
-        Create a comprehensive visualization showing:
-        1. PTR Network representation (left)
-        2. Incomplete puzzle (middle)
-        3. Complete solution (right)
+        Create a comprehensive 2x2 visualization showing:
+        Top row: Human perspective (complete solution | incomplete puzzle)
+        Bottom row: PTR Network perspective (with solution | grid only)
         """
         if sample_idx >= len(self.ptrnet_viz.data) or sample_idx >= len(self.puzzle_data):
             print(f"Sample index {sample_idx} out of range.")
