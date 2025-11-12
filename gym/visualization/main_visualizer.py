@@ -50,44 +50,39 @@ class MainVisualizer:
 
         fig, axes = plt.subplots(2, 2, figsize=(16, 12))
 
-        # Top row: Human views
-        # 1. Complete Solution View (Human)
-        puzzle = self.puzzle_data[sample_idx]
-        PuzzleVisualizer.draw_puzzle(puzzle, show_solution=True, ax=axes[0, 0], add_legend=False)
-        axes[0, 0].set_title('Human: Complete Solution', fontsize=14, fontweight='bold')
-
-        # Add legend for complete solution
-        complete_legend = [
+        # Define unified legend elements
+        import matplotlib.patches as patches
+        unified_legend = [
             plt.Line2D([0], [0], color='red', linewidth=4, label='Walls'),
             plt.Line2D([0], [0], color='blue', linewidth=2, alpha=0.6, label='Solution Path'),
             plt.scatter([0], [0], c='green', marker='o', s=100, label='Start'),
             plt.scatter([0], [0], c='red', marker='s', s=100, label='Goal'),
             plt.scatter([0], [0], c='yellow', marker='P', s=100, label='Checkpoint')
         ]
-        axes[0, 0].legend(handles=complete_legend, loc='upper right', fontsize=8)
+
+        # Top row: Human views
+        # 1. Complete Solution View (Human)
+        puzzle = self.puzzle_data[sample_idx]
+        PuzzleVisualizer.draw_puzzle(puzzle, show_solution=True, ax=axes[0, 0], add_legend=False)
+        axes[0, 0].set_title('Human: Complete Solution', fontsize=14, fontweight='bold')
 
         # 2. Incomplete Puzzle View (Human)
         PuzzleVisualizer.draw_puzzle(puzzle, show_solution=False, ax=axes[0, 1], add_legend=False)
         axes[0, 1].set_title('Human: Incomplete Puzzle', fontsize=14, fontweight='bold')
 
-        # Add legend for incomplete puzzle
-        incomplete_legend = [
-            plt.Line2D([0], [0], color='red', linewidth=4, label='Walls'),
-            plt.scatter([0], [0], c='green', marker='o', s=100, label='Start'),
-            plt.scatter([0], [0], c='red', marker='s', s=100, label='Goal'),
-            plt.scatter([0], [0], c='yellow', marker='P', s=100, label='Checkpoint')
-        ]
-        axes[0, 1].legend(handles=incomplete_legend, loc='upper right', fontsize=8)
-
         # Bottom row: PTR Network views
         # 3. PTR Network with Solution
         ptrnet_sample = self.ptrnet_viz.data[sample_idx]
-        self._draw_ptrnet_view(ptrnet_sample, axes[1, 0], show_solution=True)
+        self._draw_ptrnet_view(ptrnet_sample, axes[1, 0], puzzle, show_solution=True)
         axes[1, 0].set_title('PTR Network: With Solution Path', fontsize=14, fontweight='bold')
 
         # 4. PTR Network without Solution
-        self._draw_ptrnet_view(ptrnet_sample, axes[1, 1], show_solution=False)
+        self._draw_ptrnet_view(ptrnet_sample, axes[1, 1], puzzle, show_solution=False)
         axes[1, 1].set_title('PTR Network: Grid Only', fontsize=14, fontweight='bold')
+
+        # Add unified legend at the bottom
+        fig.legend(handles=unified_legend, loc='lower center', bbox_to_anchor=(0.5, -0.02), 
+                  ncol=5, fontsize=12, frameon=True)
 
         # Overall title
         fig.suptitle(f'Comprehensive Puzzle Visualization - Sample {sample_idx}\nTop: Human Perspective | Bottom: PTR Network (ML) Perspective',
@@ -101,49 +96,84 @@ class MainVisualizer:
         else:
             plt.show()
 
-    def _draw_ptrnet_view(self, sample: dict, ax: plt.Axes, show_solution: bool = True) -> None:
-        """Draw the PTR Network representation view."""
+    def _draw_ptrnet_view(self, sample: dict, ax: plt.Axes, puzzle: dict, show_solution: bool = True) -> None:
+        """Draw the PTR Network representation view with same visual style as human view."""
         input_data = sample['input']
 
-        # Color mapping for different waypoint types
-        waypoint_colors = {
-            0: 'white',        # none
-            1: 'lightgreen',   # start
-            2: 'yellow',       # checkpoint
-            3: 'lightblue'     # goal
-        }
+        # Plot the grid - all cells are white background
+        import matplotlib.patches as patches
+        for i in range(7):
+            for j in range(7):
+                cell_idx = i * 7 + j
+                if cell_idx < len(input_data):
+                    cell_data = input_data[cell_idx]
 
-        # Plot the grid
+                    # Draw cell with white background
+                    rect = patches.Rectangle((j, 6-i), 1, 1, linewidth=1,
+                                       edgecolor='black', facecolor='white')
+                    ax.add_patch(rect)
+
+                    # Draw directional walls (if new encoding with 7 features)
+                    if len(cell_data) >= 7:
+                        wall_up = int(cell_data[3])
+                        wall_down = int(cell_data[4])
+                        wall_left = int(cell_data[5])
+                        wall_right = int(cell_data[6])
+                        
+                        # Draw walls as thick red lines on the cell edges
+                        # Cell rectangle: bottom-left at (j, 6-i), size 1x1
+                        # So: x-range [j, j+1], y-range [6-i, 7-i]
+                        
+                        # Convert grid coordinates (i,j) to visual coordinates
+                        c = j  # column (x-coordinate)
+                        r = 6 - i  # row (y-coordinate for bottom edge, inverted)
+                        
+                        if wall_up and i > 0:  # Wall to cell above
+                            # Horizontal line at top edge: y = 7-i
+                            ax.plot([c, c + 1], [7 - i, 7 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                        if wall_down and i < 6:  # Wall to cell below
+                            # Horizontal line at bottom edge: y = 6-i
+                            ax.plot([c, c + 1], [6 - i, 6 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                        if wall_left and j > 0:  # Wall to cell on left
+                            # Vertical line at left edge: x = j
+                            ax.plot([j, j], [6 - i, 7 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                        if wall_right and j < 6:  # Wall to cell on right
+                            # Vertical line at right edge: x = j+1
+                            ax.plot([j + 1, j + 1], [6 - i, 7 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+
+                    # Add cell index
+                    ax.text(j + 0.5, 6-i + 0.5, str(cell_idx),
+                           ha='center', va='center', fontsize=6, fontweight='bold')
+
+        # Draw waypoint markers (matching human visualizer style)
+        # Create checkpoint position to index mapping
+        checkpoint_positions = puzzle['checkpoints']['checkpoints']
+        
         for i in range(7):
             for j in range(7):
                 cell_idx = i * 7 + j
                 if cell_idx < len(input_data):
                     cell_data = input_data[cell_idx]
                     waypoint_type = int(cell_data[2])
-                    is_blocked = int(cell_data[3])
-
-                    # Base color from waypoint type
-                    color = waypoint_colors.get(waypoint_type, 'white')
-
-                    # Darker shade if blocked
-                    if is_blocked:
-                        if color == 'white':
-                            color = 'lightgray'
-                        elif color == 'lightgreen':
-                            color = 'darkgreen'
-                        elif color == 'yellow':
-                            color = 'orange'
-                        elif color == 'lightblue':
-                            color = 'blue'
-
-                    # Draw cell
-                    rect = plt.Rectangle((j, 6-i), 1, 1, linewidth=1,
-                                       edgecolor='black', facecolor=color)
-                    ax.add_patch(rect)
-
-                    # Add cell index
-                    ax.text(j + 0.5, 6-i + 0.5, str(cell_idx),
-                           ha='center', va='center', fontsize=6, fontweight='bold')
+                    
+                    x = j + 0.5
+                    y = 6 - i + 0.5
+                    
+                    if waypoint_type == 1:  # Start - green circle
+                        ax.plot(x, y, 'go', markersize=12, zorder=15)
+                        ax.text(x, y, 'S', ha='center', va='center', color='white', weight='bold', fontsize=8, zorder=16)
+                    elif waypoint_type == 3:  # Goal - red square
+                        ax.plot(x, y, 'rs', markersize=12, zorder=15)
+                        ax.text(x, y, 'G', ha='center', va='center', color='white', weight='bold', fontsize=8, zorder=16)
+                    elif waypoint_type == 2:  # Checkpoint - yellow plus with number
+                        ax.plot(x, y, 'yP', markersize=12, zorder=15)
+                        # Find checkpoint index
+                        cell_pos = [i, j]
+                        for cp_idx, cp_pos in enumerate(checkpoint_positions):
+                            if cp_pos == cell_pos:
+                                ax.text(x, y, str(cp_idx + 1), ha='center', va='center', 
+                                       color='black', weight='bold', fontsize=8, zorder=16)
+                                break
 
         # Draw the path sequence
         if show_solution:
@@ -156,34 +186,17 @@ class MainVisualizer:
                 path_x.append(col + 0.5)
                 path_y.append(6 - row + 0.5)
 
-            # Draw path lines
-            ax.plot(path_x, path_y, 'r-', linewidth=2, alpha=0.8, zorder=10)
-
-            # Draw path points
-            ax.scatter(path_x, path_y, c='red', s=50, zorder=11)
+            # Draw path lines - blue to match human visualizer
+            ax.plot(path_x, path_y, 'b-', linewidth=2, alpha=0.6, zorder=10)
 
         ax.set_xlim(0, 7)
         ax.set_ylim(0, 7)
         ax.set_aspect('equal')
         ax.set_xticks(range(8))
         ax.set_yticks(range(8))
+        ax.set_xticklabels([])  # No axis labels
+        ax.set_yticklabels([])  # No axis labels
         ax.grid(True, alpha=0.3)
-
-        # Add legend for PTRNet view
-        import matplotlib.patches as patches
-        legend_elements = [
-            patches.Patch(facecolor='white', edgecolor='black', label='Empty'),
-            patches.Patch(facecolor='lightgreen', edgecolor='black', label='Start'),
-            patches.Patch(facecolor='yellow', edgecolor='black', label='Checkpoint'),
-            patches.Patch(facecolor='lightblue', edgecolor='black', label='Goal'),
-            patches.Patch(facecolor='lightgray', edgecolor='black', label='Empty (blocked)'),
-            patches.Patch(facecolor='darkgreen', edgecolor='black', label='Start (blocked)'),
-            patches.Patch(facecolor='orange', edgecolor='black', label='Checkpoint (blocked)'),
-            patches.Patch(facecolor='blue', edgecolor='black', label='Goal (blocked)')
-        ]
-        if show_solution:
-            legend_elements.append(plt.Line2D([0], [0], color='red', linewidth=2, label='Solution Path'))
-        ax.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left', fontsize=8)
 
     def visualize_multiple_samples(self, num_samples: int = 5, save_dir: Optional[str] = None) -> None:
         """Visualize multiple samples."""

@@ -6,7 +6,7 @@ import numpy as np
 import time
 
 # Import your environment and utilities
-from ..hamiltonian_puzzle_env import PuzzleDataGenerator, HamiltonianPathGenerator
+from gym.hamiltonian_puzzle_env import PuzzleDataGenerator, HamiltonianPathGenerator
 
 
 # ==============================
@@ -16,10 +16,10 @@ def puzzle_to_ptrnet_sample(puzzle):
     """
     Converts a Hamiltonian puzzle dict into a Pointer Network sample.
     Each grid cell is encoded as:
-        [x_norm, y_norm, waypoint_label, barrier_flag]
+        [x_norm, y_norm, waypoint_label, wall_up, wall_down, wall_left, wall_right]
     where:
         waypoint_label: 0=none, 1=start, 2=checkpoint, 3=goal
-        barrier_flag:   1 if blocked on any side
+        wall_up/down/left/right: 1 if there's a wall blocking that direction, 0 otherwise
     """
     rows, cols = puzzle['rows'], puzzle['cols']
     path = puzzle['solution_path']
@@ -46,13 +46,15 @@ def puzzle_to_ptrnet_sample(puzzle):
         else:
             w_label = 0
 
-        # Barrier encoding
-        is_blocked = any(
-            frozenset([(r, c), n]) in walls
-            for n in HamiltonianPathGenerator._get_neighbors(r, c, rows, cols)
-        )
+        # Directional wall encoding
+        # Note: Grid boundaries are encoded as walls (1) for ML model awareness,
+        # but visualizer filters them out to show only internal puzzle walls
+        wall_up = int(frozenset([(r, c), (r - 1, c)]) in walls) if r > 0 else 1
+        wall_down = int(frozenset([(r, c), (r + 1, c)]) in walls) if r < rows - 1 else 1
+        wall_left = int(frozenset([(r, c), (r, c - 1)]) in walls) if c > 0 else 1
+        wall_right = int(frozenset([(r, c), (r, c + 1)]) in walls) if c < cols - 1 else 1
 
-        inputs.append([x_norm, y_norm, w_label, int(is_blocked)])
+        inputs.append([x_norm, y_norm, w_label, wall_up, wall_down, wall_left, wall_right])
 
     # Build output: sequence of indices along solution path
     outputs = [cell_to_idx[cell] for cell in path]

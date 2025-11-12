@@ -26,7 +26,8 @@ class PTRNetDatasetVisualizer:
 
     def reconstruct_grid(self, input_data):
         """Reconstruct 7x7 grid from flattened input data"""
-        grid = np.zeros((7, 7, 4))  # x, y, type, is_checkpoint
+        # Updated to handle 7 features per cell
+        grid = np.zeros((7, 7, 7))  # x, y, type, wall_up, wall_down, wall_left, wall_right
         for i, cell_data in enumerate(input_data):
             row = i // 7
             col = i % 7
@@ -34,7 +35,7 @@ class PTRNetDatasetVisualizer:
         return grid
 
     def visualize_sample(self, sample_idx, save_path=None):
-        """Visualize a single sample"""
+        """Visualize a single sample with consistent formatting"""
         if sample_idx >= len(self.data):
             print(f"Sample index {sample_idx} out of range. Max: {len(self.data)-1}")
             return
@@ -43,50 +44,71 @@ class PTRNetDatasetVisualizer:
         input_data = sample['input']
         output_sequence = sample['output']
 
-        grid = self.reconstruct_grid(input_data)
+        fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 
-        fig, ax = plt.subplots(1, 1, figsize=(10, 8))
+        # Plot grid cells with white backgrounds
+        for i in range(7):
+            for j in range(7):
+                cell_idx = i * 7 + j
+                if cell_idx < len(input_data):
+                    # Draw cell with white background
+                    rect = patches.Rectangle((j, 6-i), 1, 1, linewidth=1,
+                                           edgecolor='black', facecolor='white')
+                    ax.add_patch(rect)
 
-        # Color mapping for different waypoint types
-        waypoint_colors = {
-            0: 'white',        # none
-            1: 'lightgreen',   # start
-            2: 'yellow',       # checkpoint
-            3: 'lightblue'     # goal
-        }
+                    # Add cell index
+                    ax.text(j + 0.5, 6-i + 0.5, str(cell_idx),
+                           ha='center', va='center', fontsize=6, fontweight='bold', 
+                           color='gray', zorder=1)
 
-        # Plot the grid
+        # Draw directional walls
+        for i in range(7):
+            for j in range(7):
+                cell_idx = i * 7 + j
+                if cell_idx < len(input_data):
+                    cell_data = input_data[cell_idx]
+                    
+                    if len(cell_data) >= 7:
+                        wall_up = int(cell_data[3])
+                        wall_down = int(cell_data[4])
+                        wall_left = int(cell_data[5])
+                        wall_right = int(cell_data[6])
+                        
+                        # Draw walls at cell edges (matching comprehensive view)
+                        if wall_up and i > 0:
+                            ax.plot([j, j + 1], [7 - i, 7 - i], 'r-', linewidth=4, 
+                                   solid_capstyle='butt', zorder=5)
+                        if wall_down and i < 6:
+                            ax.plot([j, j + 1], [6 - i, 6 - i], 'r-', linewidth=4, 
+                                   solid_capstyle='butt', zorder=5)
+                        if wall_left and j > 0:
+                            ax.plot([j, j], [6 - i, 7 - i], 'r-', linewidth=4, 
+                                   solid_capstyle='butt', zorder=5)
+                        if wall_right and j < 6:
+                            ax.plot([j + 1, j + 1], [6 - i, 7 - i], 'r-', linewidth=4, 
+                                   solid_capstyle='butt', zorder=5)
+
+        # Draw waypoint markers
         for i in range(7):
             for j in range(7):
                 cell_idx = i * 7 + j
                 if cell_idx < len(input_data):
                     cell_data = input_data[cell_idx]
                     waypoint_type = int(cell_data[2])
-                    is_blocked = int(cell_data[3])
-
-                    # Base color from waypoint type
-                    color = waypoint_colors.get(waypoint_type, 'white')
-
-                    # Darker shade if blocked
-                    if is_blocked:
-                        # Make blocked cells darker
-                        if color == 'white':
-                            color = 'lightgray'
-                        elif color == 'lightgreen':
-                            color = 'darkgreen'
-                        elif color == 'yellow':
-                            color = 'orange'
-                        elif color == 'lightblue':
-                            color = 'blue'
-
-                    # Draw cell
-                    rect = patches.Rectangle((j, 6-i), 1, 1, linewidth=1,
-                                           edgecolor='black', facecolor=color)
-                    ax.add_patch(rect)
-
-                    # Add cell index
-                    ax.text(j + 0.5, 6-i + 0.5, str(cell_idx),
-                           ha='center', va='center', fontsize=6, fontweight='bold')
+                    
+                    x = j + 0.5
+                    y = 6 - i + 0.5
+                    
+                    if waypoint_type == 1:  # Start
+                        ax.plot(x, y, 'go', markersize=12, zorder=15)
+                        ax.text(x, y, 'S', ha='center', va='center', 
+                               color='white', weight='bold', fontsize=8, zorder=16)
+                    elif waypoint_type == 3:  # Goal
+                        ax.plot(x, y, 'rs', markersize=12, zorder=15)
+                        ax.text(x, y, 'G', ha='center', va='center', 
+                               color='white', weight='bold', fontsize=8, zorder=16)
+                    elif waypoint_type == 2:  # Checkpoint
+                        ax.plot(x, y, 'yP', markersize=12, zorder=15)
 
         # Plot the path sequence
         path_x = []
@@ -97,50 +119,31 @@ class PTRNetDatasetVisualizer:
             path_x.append(col + 0.5)
             path_y.append(6 - row + 0.5)
 
-        # Draw path lines
-        ax.plot(path_x, path_y, 'r-', linewidth=3, alpha=0.7, zorder=10)
+        # Draw path lines (blue to match comprehensive view)
+        ax.plot(path_x, path_y, 'b-', linewidth=2, alpha=0.6, zorder=10)
 
-        # Draw path points
-        ax.scatter(path_x, path_y, c='red', s=100, zorder=11)
-
-        # Mark start and end
-        if output_sequence:
-            start_idx = output_sequence[0]
-            end_idx = output_sequence[-1]
-            start_row = start_idx // 7
-            start_col = start_idx % 7
-            end_row = end_idx // 7
-            end_col = end_idx % 7
-
-            ax.scatter([start_col + 0.5], [6 - start_row + 0.5],
-                      c='green', s=200, marker='*', zorder=12, label='Start')
-            ax.scatter([end_col + 0.5], [6 - end_row + 0.5],
-                      c='purple', s=200, marker='X', zorder=12, label='End')
-
+        # Set up axes
         ax.set_xlim(0, 7)
         ax.set_ylim(0, 7)
         ax.set_aspect('equal')
         ax.set_xticks(range(8))
         ax.set_yticks(range(8))
+        ax.set_xticklabels([])  # No axis labels
+        ax.set_yticklabels([])  # No axis labels
         ax.grid(True, alpha=0.3)
+        ax.set_title('PTR Network Encoding', fontsize=14, fontweight='bold')
 
-        # Legend
+        # Unified legend at bottom
         legend_elements = [
-            patches.Patch(facecolor='white', edgecolor='black', label='Empty'),
-            patches.Patch(facecolor='lightgreen', edgecolor='black', label='Start'),
-            patches.Patch(facecolor='yellow', edgecolor='black', label='Checkpoint'),
-            patches.Patch(facecolor='lightblue', edgecolor='black', label='Goal'),
-            patches.Patch(facecolor='lightgray', edgecolor='black', label='Empty (blocked)'),
-            patches.Patch(facecolor='darkgreen', edgecolor='black', label='Start (blocked)'),
-            patches.Patch(facecolor='orange', edgecolor='black', label='Checkpoint (blocked)'),
-            patches.Patch(facecolor='blue', edgecolor='black', label='Goal (blocked)'),
-            plt.Line2D([0], [0], color='red', linewidth=3, label='Path'),
-            plt.scatter([0], [0], c='green', s=100, marker='*', label='Start'),
-            plt.scatter([0], [0], c='purple', s=100, marker='X', label='End')
+            plt.Line2D([0], [0], color='red', linewidth=4, label='Walls'),
+            plt.Line2D([0], [0], color='blue', linewidth=2, alpha=0.6, label='Solution Path'),
+            plt.scatter([0], [0], c='green', marker='o', s=100, label='Start'),
+            plt.scatter([0], [0], c='red', marker='s', s=100, label='Goal'),
+            plt.scatter([0], [0], c='yellow', marker='P', s=100, label='Checkpoint')
         ]
-        ax.legend(handles=legend_elements, bbox_to_anchor=(1.05, 1), loc='upper left')
+        ax.legend(handles=legend_elements, loc='upper center', bbox_to_anchor=(0.5, -0.05),
+                 ncol=5, fontsize=10, frameon=True)
 
-        plt.title(f'PTRNet Dataset Sample {sample_idx}\nPath Length: {len(output_sequence)}')
         plt.tight_layout()
 
         if save_path:
