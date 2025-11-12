@@ -1,23 +1,43 @@
+"""
+Puzzle Visualization Utilities.
+
+This module provides classes for visualizing Hamiltonian puzzles,
+including static drawing and dataset generation.
+
+Classes:
+    PuzzleVisualizer: Static methods for drawing and visualizing puzzles.
+    PuzzleDatasetGenerator: Generates datasets of puzzle visualizations.
+"""
+
 import os
 import random
 import time
 import matplotlib.pyplot as plt
-from hamiltonenv import HamiltonianPuzzleEnv
+from typing import Dict, Any, Optional
+from .hamiltonian_puzzle_env import HamiltonianPuzzleEnv
 
 
 class PuzzleVisualizer:
-    """Handles visualization of Hamiltonian puzzles."""
+    """Handles visualization of Hamiltonian puzzles using matplotlib.
+
+    Provides static methods to draw individual puzzles or side-by-side
+    incomplete/complete views. Supports saving to files or displaying.
+    """
 
     @staticmethod
-    def draw_puzzle(puzzle, show_solution=False, ax=None, title=""):
+    def draw_puzzle(puzzle: Dict[str, Any], show_solution: bool = False,
+                    ax: Optional[plt.Axes] = None, title: str = "") -> plt.Axes:
         """
         Draws a single puzzle on a given matplotlib axis.
 
-        Parameters:
-            puzzle (dict): Puzzle data with 'solution_path', 'checkpoints', 'walls', 'rows', 'cols'.
-            show_solution (bool): If True, draw the full solution path.
-            ax (matplotlib.Axes): Axis to draw on. If None, creates a new figure.
-            title (str): Optional title for the plot.
+        Args:
+            puzzle: Puzzle data with 'solution_path', 'checkpoints', 'walls', 'rows', 'cols'.
+            show_solution: If True, draw the full solution path.
+            ax: Axis to draw on. If None, creates a new figure.
+            title: Optional title for the plot.
+
+        Returns:
+            The matplotlib Axes object.
         """
         path = puzzle['solution_path']
         checkpoints = puzzle['checkpoints']
@@ -71,14 +91,14 @@ class PuzzleVisualizer:
         return ax
 
     @staticmethod
-    def visualize_puzzle(puzzle, save_path=None):
+    def visualize_puzzle(puzzle: Dict[str, Any], save_path: Optional[str] = None) -> None:
         """
         Visualizes a puzzle side by side: incomplete vs complete.
         Optionally saves it to a file.
 
-        Parameters:
-            puzzle (dict): The puzzle data.
-            save_path (str): If provided, saves the figure to this path.
+        Args:
+            puzzle: The puzzle data.
+            save_path: If provided, saves the figure to this path.
         """
         num_checkpoints = len(puzzle['checkpoints']['checkpoints'])
         fig, axes = plt.subplots(1, 2, figsize=(14, 7))
@@ -104,11 +124,33 @@ class PuzzleVisualizer:
 
 
 class PuzzleDatasetGenerator:
-    """Generates and visualizes Hamiltonian puzzles."""
+    """Generates and visualizes Hamiltonian puzzles for datasets.
 
-    def __init__(self, output_dir="dataset_samples_side_by_side/",
-                 num_samples=20, rows=7, cols=7,
-                 checkpoint_range=(13, 13), wall_probability=0.15):
+    Creates random puzzles and saves their visualizations as images.
+    Useful for generating training data for ML models.
+
+    Args:
+        output_dir: Directory to save images.
+        num_samples: Number of puzzles to generate.
+        rows: Grid rows.
+        cols: Grid columns.
+        checkpoint_range: Tuple (min, max) for random checkpoint count.
+        wall_probability: Probability of walls.
+    """
+    def __init__(self, output_dir: str = "dataset_samples_side_by_side/",
+                 num_samples: int = 20, rows: int = 7, cols: int = 7,
+                 checkpoint_range: tuple = (13, 13), wall_probability: float = 0.15):
+        """
+        Initialize the dataset generator.
+
+        Args:
+            output_dir: Directory to save images.
+            num_samples: Number of samples to generate.
+            rows: Grid rows.
+            cols: Grid columns.
+            checkpoint_range: Min/max checkpoints.
+            wall_probability: Wall generation probability.
+        """
         self.output_dir = output_dir
         self.num_samples = num_samples
         self.rows = rows
@@ -117,7 +159,7 @@ class PuzzleDatasetGenerator:
         self.wall_probability = wall_probability
         os.makedirs(output_dir, exist_ok=True)
 
-    def generate_dataset(self):
+    def generate_dataset(self) -> None:
         """Generates a dataset of puzzles and saves visualizations."""
         start_time = time.time()
 

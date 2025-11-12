@@ -1,4 +1,5 @@
 // Popup script: extract full page HTML from the active tab and let user copy/download/open it.
+// Also handles game data extraction and sequence execution for Zip puzzles.
 
 const extractBtn = document.getElementById('extractBtn');
 const copyBtn = document.getElementById('copyBtn');
