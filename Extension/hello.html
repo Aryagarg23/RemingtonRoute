@@ -1,6 +1,43 @@
+<!doctype html>
 <html>
+  <head>
+    <meta charset="utf-8" />
+    <title>Hello Extensions</title>
+    <style>
+      body{font-family: Arial, sans-serif; width:480px; padding:12px}
+      h1{font-size:18px;margin:0 0 8px}
+      #rawHtml{width:100%;height:260px;font-family:monospace;font-size:12px;white-space:pre-wrap;overflow:auto}
+      .row{margin-top:8px}
+      button{margin-right:8px}
+      #actions{display:none;margin-top:8px}
+    </style>
+  </head>
   <body>
-    <h1>Hello Extensions</h1>
+    <h1>Extract page HTML</h1>
+    <div class="row">
+      <button id="extractBtn">Extract HTML</button>
+      <button id="copyBtn" disabled>Copy</button>
+      <button id="downloadBtn" disabled>Download .html</button>
+      <button id="openBtn" disabled>Open in new tab</button>
+    </div>
+
+    <div class="row">
+      <textarea id="rawHtml" placeholder="Extracted HTML will appear here..." readonly></textarea>
+    </div>
+
+    <h2 style="font-size:14px;margin-top:12px;margin-bottom:6px">Game integration</h2>
+    <div class="row">
+      <button id="extractGameDataBtn">Extract Game Data</button>
+      <button id="runSequenceBtn" disabled>Run Sequence</button>
+    </div>
+    <div class="row">
+      <textarea id="gameData" placeholder='Game data (JSON) will appear here' readonly style="height:140px"></textarea>
+    </div>
+    <div class="row">
+      <label for="sequenceInput" style="display:block;font-size:12px;margin-top:6px">Sequence (JSON array of cell indices):</label>
+      <textarea id="sequenceInput" placeholder='e.g. [0,1,2,3]' style="height:80px"></textarea>
+    </div>
+
     <script src="popup.js"></script>
   </body>
 </html>
