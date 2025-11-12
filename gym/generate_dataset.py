@@ -7,8 +7,8 @@ from hamiltonenv import HamiltonianPuzzleEnv
 # Dataset parameters
 # ==============================
 num_samples = 5
-rows, cols = 8, 8
-checkpoint_range = (5, 13)
+rows, cols = 7, 7
+checkpoint_range = (13, 13)
 wall_probability = 0.2
 output_dir = "dataset_samples_side_by_side/"
 os.makedirs(output_dir, exist_ok=True)
