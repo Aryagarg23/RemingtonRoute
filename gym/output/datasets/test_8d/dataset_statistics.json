@@ -1,0 +1,39 @@
+{
+  "total_samples": 5,
+  "grid_sizes": {
+    "6x8": 2,
+    "10x10": 1,
+    "8x10": 1,
+    "12x11": 1
+  },
+  "checkpoint_counts": {
+    "6": 1,
+    "13": 1,
+    "7": 1,
+    "11": 1,
+    "12": 1
+  },
+  "wall_densities": [
+    0.11879443056059293,
+    0.30593213838872735,
+    0.1528684772048558,
+    0.2691620847109779,
+    0.3324639526585056
+  ],
+  "sequence_lengths": [
+    48,
+    100,
+    48,
+    80,
+    132
+  ],
+  "difficulty_levels": {
+    "easy": 2,
+    "medium": 1,
+    "hard": 2
+  },
+  "avg_wall_density": 0.23584421670473193,
+  "avg_sequence_length": 81.6,
+  "min_sequence_length": 48,
+  "max_sequence_length": 132
+}

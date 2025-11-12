@@ -11,8 +11,8 @@ from pathlib import Path
 from typing import Optional
 import argparse
 
-from .puzzle_visualizer import PuzzleVisualizer
-from .visualize_ptrnet_dataset import PTRNetDatasetVisualizer
+from gym.visualization.puzzle_visualizer import PuzzleVisualizer
+from gym.visualization.visualize_ptrnet_dataset import PTRNetDatasetVisualizer
 
 
 class MainVisualizer:
@@ -99,65 +99,67 @@ class MainVisualizer:
     def _draw_ptrnet_view(self, sample: dict, ax: plt.Axes, puzzle: dict, show_solution: bool = True) -> None:
         """Draw the PTR Network representation view with same visual style as human view."""
         input_data = sample['input']
+        
+        # Get actual grid dimensions from puzzle
+        rows = puzzle['rows']
+        cols = puzzle['cols']
 
         # Plot the grid - all cells are white background
         import matplotlib.patches as patches
-        for i in range(7):
-            for j in range(7):
-                cell_idx = i * 7 + j
+        for i in range(rows):
+            for j in range(cols):
+                cell_idx = i * cols + j
                 if cell_idx < len(input_data):
                     cell_data = input_data[cell_idx]
 
                     # Draw cell with white background
-                    rect = patches.Rectangle((j, 6-i), 1, 1, linewidth=1,
+                    rect = patches.Rectangle((j, (rows-1)-i), 1, 1, linewidth=1,
                                        edgecolor='black', facecolor='white')
                     ax.add_patch(rect)
 
-                    # Draw directional walls (if new encoding with 7 features)
+                    # Draw directional walls (if new encoding with 8 features)
                     if len(cell_data) >= 7:
                         wall_up = int(cell_data[3])
                         wall_down = int(cell_data[4])
                         wall_left = int(cell_data[5])
                         wall_right = int(cell_data[6])
+                        # cell_data[7] is is_visited (not used for static wall visualization)
                         
                         # Draw walls as thick red lines on the cell edges
-                        # Cell rectangle: bottom-left at (j, 6-i), size 1x1
-                        # So: x-range [j, j+1], y-range [6-i, 7-i]
-                        
                         # Convert grid coordinates (i,j) to visual coordinates
                         c = j  # column (x-coordinate)
-                        r = 6 - i  # row (y-coordinate for bottom edge, inverted)
+                        r = (rows-1) - i  # row (y-coordinate for bottom edge, inverted)
                         
                         if wall_up and i > 0:  # Wall to cell above
-                            # Horizontal line at top edge: y = 7-i
-                            ax.plot([c, c + 1], [7 - i, 7 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
-                        if wall_down and i < 6:  # Wall to cell below
-                            # Horizontal line at bottom edge: y = 6-i
-                            ax.plot([c, c + 1], [6 - i, 6 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                            # Horizontal line at top edge
+                            ax.plot([c, c + 1], [r + 1, r + 1], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                        if wall_down and i < rows-1:  # Wall to cell below
+                            # Horizontal line at bottom edge
+                            ax.plot([c, c + 1], [r, r], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
                         if wall_left and j > 0:  # Wall to cell on left
-                            # Vertical line at left edge: x = j
-                            ax.plot([j, j], [6 - i, 7 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
-                        if wall_right and j < 6:  # Wall to cell on right
-                            # Vertical line at right edge: x = j+1
-                            ax.plot([j + 1, j + 1], [6 - i, 7 - i], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                            # Vertical line at left edge
+                            ax.plot([j, j], [r, r + 1], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
+                        if wall_right and j < cols-1:  # Wall to cell on right
+                            # Vertical line at right edge
+                            ax.plot([j + 1, j + 1], [r, r + 1], 'r-', linewidth=4, solid_capstyle='butt', zorder=5)
 
                     # Add cell index
-                    ax.text(j + 0.5, 6-i + 0.5, str(cell_idx),
+                    ax.text(j + 0.5, (rows-1)-i + 0.5, str(cell_idx),
                            ha='center', va='center', fontsize=6, fontweight='bold')
 
         # Draw waypoint markers (matching human visualizer style)
         # Create checkpoint position to index mapping
         checkpoint_positions = puzzle['checkpoints']['checkpoints']
         
-        for i in range(7):
-            for j in range(7):
-                cell_idx = i * 7 + j
+        for i in range(rows):
+            for j in range(cols):
+                cell_idx = i * cols + j
                 if cell_idx < len(input_data):
                     cell_data = input_data[cell_idx]
                     waypoint_type = int(cell_data[2])
                     
                     x = j + 0.5
-                    y = 6 - i + 0.5
+                    y = (rows-1) - i + 0.5
                     
                     if waypoint_type == 1:  # Start - green circle
                         ax.plot(x, y, 'go', markersize=12, zorder=15)
@@ -167,10 +169,11 @@ class MainVisualizer:
                         ax.text(x, y, 'G', ha='center', va='center', color='white', weight='bold', fontsize=8, zorder=16)
                     elif waypoint_type == 2:  # Checkpoint - yellow plus with number
                         ax.plot(x, y, 'yP', markersize=12, zorder=15)
-                        # Find checkpoint index
-                        cell_pos = [i, j]
+                        # Find checkpoint index - convert to tuple for comparison
+                        cell_pos = (i, j)
                         for cp_idx, cp_pos in enumerate(checkpoint_positions):
-                            if cp_pos == cell_pos:
+                            # Convert list to tuple for comparison
+                            if tuple(cp_pos) == cell_pos:
                                 ax.text(x, y, str(cp_idx + 1), ha='center', va='center', 
                                        color='black', weight='bold', fontsize=8, zorder=16)
                                 break
@@ -181,19 +184,19 @@ class MainVisualizer:
             path_x = []
             path_y = []
             for idx in output_sequence:
-                row = idx // 7
-                col = idx % 7
+                row = idx // cols
+                col = idx % cols
                 path_x.append(col + 0.5)
-                path_y.append(6 - row + 0.5)
+                path_y.append((rows-1) - row + 0.5)
 
             # Draw path lines - blue to match human visualizer
             ax.plot(path_x, path_y, 'b-', linewidth=2, alpha=0.6, zorder=10)
 
-        ax.set_xlim(0, 7)
-        ax.set_ylim(0, 7)
+        ax.set_xlim(0, cols)
+        ax.set_ylim(0, rows)
         ax.set_aspect('equal')
-        ax.set_xticks(range(8))
-        ax.set_yticks(range(8))
+        ax.set_xticks(range(cols+1))
+        ax.set_yticks(range(rows+1))
         ax.set_xticklabels([])  # No axis labels
         ax.set_yticklabels([])  # No axis labels
         ax.grid(True, alpha=0.3)

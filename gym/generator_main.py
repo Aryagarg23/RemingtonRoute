@@ -10,10 +10,6 @@ import shutil
 import json
 from pathlib import Path
 
-# Ensure we can import from gym package
-project_root = Path(__file__).parent.parent
-sys.path.insert(0, str(project_root))
-
 from gym.generation.generate_dataset import generate_ptrnet_dataset
 from gym.visualization.main_visualizer import MainVisualizer
 from gym.visualization.visualize_ptrnet_dataset import PTRNetDatasetVisualizer

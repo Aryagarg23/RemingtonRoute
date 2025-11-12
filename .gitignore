@@ -3,3 +3,18 @@
 /__pycache__/
 *.pyc
 .DS_Store
+# Model outputs
+model/checkpoints/*.pt
+model/logs/*.png
+model/logs/*.json
+model/evaluations/
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+
+# PyTorch
+*.pth
+*.ckpt
+
+# Dataset cache
+*.npz

@@ -1,7 +1,6 @@
 # Gym Module: Hamiltonian Puzzle Environment and Visualization
 
-This module provides tools for generating, visualizing, and interacting with Hamiltonian path puzzles, designed for reinforcement learning and machine learning research.
-
+This module provides tools for generating, visualizing, and interacting with Hamiltonian path puzzles.
 ## Overview
 
 The `gym` module contains classes and utilities for creating puzzles where an agent must navigate a grid from start to goal, visiting numbered checkpoints in order, while avoiding walls. These puzzles are inspired by LinkedIn's daily games and are used to train AI models like Pointer Networks for sequence prediction.
@@ -77,14 +76,9 @@ Install via pip if needed.
    PuzzleVisualizer.visualize_puzzle(puzzle)
    ```
 
-3. **Train RL Agent:**
-   ```python
-   env = HamiltonianPuzzleEnv()
-   # Your RL training loop here
-   ```
-
 ## Data Format
 
+### Puzzle Structure
 Puzzle data is a dict with:
 - `rows`, `cols`: Grid dimensions.
 - `solution_path`: List of (row, col) tuples for the Hamiltonian path.
@@ -92,7 +86,13 @@ Puzzle data is a dict with:
 - `walls`: Set of frozensets representing blocked edges.
 - `wall_set`: Alias for walls.
 
+### ML Encoding (8D Feature Vector)
+Each grid cell is encoded as 8 features for machine learning:
+- `[x_norm, y_norm, waypoint_type, wall_up, wall_down, wall_left, wall_right, is_visited]`
 
-## License
+Where:
+- `x_norm`, `y_norm`: Normalized coordinates [0, 1]
+- `waypoint_type`: 0=empty, 1=start, 2=checkpoint, 3=goal
+- `wall_up/down/left/right`: 1=blocked, 0=open
+- `is_visited`: 0=unvisited, 1=visited (updated during path construction)
 
-[Add license info if applicable]

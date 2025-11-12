@@ -14,7 +14,7 @@ import random
 import time
 import matplotlib.pyplot as plt
 from typing import Dict, Any, Optional
-from ..hamiltonian_puzzle_env import HamiltonianPuzzleEnv
+from gym.hamiltonian_puzzle_env import HamiltonianPuzzleEnv
 
 
 class PuzzleVisualizer:

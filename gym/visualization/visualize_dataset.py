@@ -1,6 +1,6 @@
 import json
 from pathlib import Path
-from .puzzle_visualizer import PuzzleVisualizer
+from gym.visualization.puzzle_visualizer import PuzzleVisualizer
 
 # Path to your saved puzzles file
 puzzle_path = Path(__file__).parent.parent.parent / "gym" / "output" / "datasets" / "ptrnet_puzzles.jsonl"

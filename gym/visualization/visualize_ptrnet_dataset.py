@@ -25,12 +25,16 @@ class PTRNetDatasetVisualizer:
                     self.data.append(json.loads(line.strip()))
 
     def reconstruct_grid(self, input_data):
-        """Reconstruct 7x7 grid from flattened input data"""
-        # Updated to handle 7 features per cell
-        grid = np.zeros((7, 7, 7))  # x, y, type, wall_up, wall_down, wall_left, wall_right
+        """Reconstruct grid from flattened input data (now 8 features per cell)"""
+        # Infer grid size from number of cells
+        num_cells = len(input_data)
+        grid_size = int(np.sqrt(num_cells))
+        
+        # Features: x, y, type, wall_up, wall_down, wall_left, wall_right, is_visited
+        grid = np.zeros((grid_size, grid_size, 8))
         for i, cell_data in enumerate(input_data):
-            row = i // 7
-            col = i % 7
+            row = i // grid_size
+            col = i % grid_size
             grid[row, col] = cell_data
         return grid
 
@@ -44,27 +48,31 @@ class PTRNetDatasetVisualizer:
         input_data = sample['input']
         output_sequence = sample['output']
 
+        # Infer grid size from input data
+        num_cells = len(input_data)
+        grid_size = int(np.sqrt(num_cells))
+
         fig, ax = plt.subplots(1, 1, figsize=(8, 8))
 
         # Plot grid cells with white backgrounds
-        for i in range(7):
-            for j in range(7):
-                cell_idx = i * 7 + j
+        for i in range(grid_size):
+            for j in range(grid_size):
+                cell_idx = i * grid_size + j
                 if cell_idx < len(input_data):
                     # Draw cell with white background
-                    rect = patches.Rectangle((j, 6-i), 1, 1, linewidth=1,
+                    rect = patches.Rectangle((j, grid_size-1-i), 1, 1, linewidth=1,
                                            edgecolor='black', facecolor='white')
                     ax.add_patch(rect)
 
                     # Add cell index
-                    ax.text(j + 0.5, 6-i + 0.5, str(cell_idx),
+                    ax.text(j + 0.5, grid_size-1-i + 0.5, str(cell_idx),
                            ha='center', va='center', fontsize=6, fontweight='bold', 
                            color='gray', zorder=1)
 
-        # Draw directional walls
-        for i in range(7):
-            for j in range(7):
-                cell_idx = i * 7 + j
+        # Draw directional walls (8D features: last one is is_visited)
+        for i in range(grid_size):
+            for j in range(grid_size):
+                cell_idx = i * grid_size + j
                 if cell_idx < len(input_data):
                     cell_data = input_data[cell_idx]
                     
@@ -73,31 +81,32 @@ class PTRNetDatasetVisualizer:
                         wall_down = int(cell_data[4])
                         wall_left = int(cell_data[5])
                         wall_right = int(cell_data[6])
+                        # cell_data[7] is is_visited (not used for visualization)
                         
-                        # Draw walls at cell edges (matching comprehensive view)
+                        # Draw walls at cell edges
                         if wall_up and i > 0:
-                            ax.plot([j, j + 1], [7 - i, 7 - i], 'r-', linewidth=4, 
+                            ax.plot([j, j + 1], [grid_size - i, grid_size - i], 'r-', linewidth=4, 
                                    solid_capstyle='butt', zorder=5)
-                        if wall_down and i < 6:
-                            ax.plot([j, j + 1], [6 - i, 6 - i], 'r-', linewidth=4, 
+                        if wall_down and i < grid_size-1:
+                            ax.plot([j, j + 1], [grid_size-1 - i, grid_size-1 - i], 'r-', linewidth=4, 
                                    solid_capstyle='butt', zorder=5)
                         if wall_left and j > 0:
-                            ax.plot([j, j], [6 - i, 7 - i], 'r-', linewidth=4, 
+                            ax.plot([j, j], [grid_size-1 - i, grid_size - i], 'r-', linewidth=4, 
                                    solid_capstyle='butt', zorder=5)
-                        if wall_right and j < 6:
-                            ax.plot([j + 1, j + 1], [6 - i, 7 - i], 'r-', linewidth=4, 
+                        if wall_right and j < grid_size-1:
+                            ax.plot([j + 1, j + 1], [grid_size-1 - i, grid_size - i], 'r-', linewidth=4, 
                                    solid_capstyle='butt', zorder=5)
 
         # Draw waypoint markers
-        for i in range(7):
-            for j in range(7):
-                cell_idx = i * 7 + j
+        for i in range(grid_size):
+            for j in range(grid_size):
+                cell_idx = i * grid_size + j
                 if cell_idx < len(input_data):
                     cell_data = input_data[cell_idx]
                     waypoint_type = int(cell_data[2])
                     
                     x = j + 0.5
-                    y = 6 - i + 0.5
+                    y = grid_size-1 - i + 0.5
                     
                     if waypoint_type == 1:  # Start
                         ax.plot(x, y, 'go', markersize=12, zorder=15)
@@ -114,24 +123,24 @@ class PTRNetDatasetVisualizer:
         path_x = []
         path_y = []
         for idx in output_sequence:
-            row = idx // 7
-            col = idx % 7
+            row = idx // grid_size
+            col = idx % grid_size
             path_x.append(col + 0.5)
-            path_y.append(6 - row + 0.5)
+            path_y.append(grid_size-1 - row + 0.5)
 
         # Draw path lines (blue to match comprehensive view)
         ax.plot(path_x, path_y, 'b-', linewidth=2, alpha=0.6, zorder=10)
 
         # Set up axes
-        ax.set_xlim(0, 7)
-        ax.set_ylim(0, 7)
+        ax.set_xlim(0, grid_size)
+        ax.set_ylim(0, grid_size)
         ax.set_aspect('equal')
-        ax.set_xticks(range(8))
-        ax.set_yticks(range(8))
+        ax.set_xticks(range(grid_size+1))
+        ax.set_yticks(range(grid_size+1))
         ax.set_xticklabels([])  # No axis labels
         ax.set_yticklabels([])  # No axis labels
         ax.grid(True, alpha=0.3)
-        ax.set_title('PTR Network Encoding', fontsize=14, fontweight='bold')
+        ax.set_title(f'PTR Network Encoding ({grid_size}x{grid_size})', fontsize=14, fontweight='bold')
 
         # Unified legend at bottom
         legend_elements = [
