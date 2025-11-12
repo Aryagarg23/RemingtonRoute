@@ -42,10 +42,11 @@ Output location: `output/datasets/`
 ### Visualization Tools (`visualization/`)
 
 #### `main_visualizer.py`
-Comprehensive 3-panel visualization showing:
-1. **PTR Network Input**: ML training data representation
-2. **Incomplete Puzzle**: Puzzle layout without solution
-3. **Complete Solution**: Full puzzle with solution path
+Comprehensive 2x2 grid visualization showing:
+- **Top-left**: Human perspective - Complete solution with path
+- **Top-right**: Human perspective - Incomplete puzzle without path
+- **Bottom-left**: PTR Network - ML input representation with solution path
+- **Bottom-right**: PTR Network - ML input representation without solution path
 
 #### `puzzle_visualizer.py`
 Core visualization utilities for drawing puzzles with matplotlib.

@@ -89,7 +89,7 @@ class MainVisualizer:
         axes[1, 1].set_title('PTR Network: Grid Only', fontsize=14, fontweight='bold')
 
         # Overall title
-        fig.suptitle(f'Comprehensive Puzzle Visualization - Sample {sample_idx}',
+        fig.suptitle(f'Comprehensive Puzzle Visualization - Sample {sample_idx}\nTop: Human Perspective | Bottom: PTR Network (ML) Perspective',
                     fontsize=16, fontweight='bold', y=0.98)
 
         plt.tight_layout()

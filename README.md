@@ -32,9 +32,9 @@ pip install -r requirements.txt
 python -m gym.generation.generate_dataset
 ```
 
-### Visualize Results
+### Run Visualizations
 ```bash
-# Comprehensive 3-panel visualization
+# Comprehensive 2x2 grid: Human vs ML perspectives
 python -m gym.visualization.main_visualizer --sample 0
 
 # Individual puzzle visualization
